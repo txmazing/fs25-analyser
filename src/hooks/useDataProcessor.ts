@@ -766,33 +766,6 @@ export const useDataProcessor = () => {
 		return fillType;
 	}
 
-	// Hilfsfunktion zum Ermitteln des Hackschnitzelpreises
-	function getWoodchipsPrice(
-		fillTypesDoc: Document | null | undefined,
-		difficultyFactor: number
-	): number {
-		if (!fillTypesDoc) return 0;
-
-		const woodchipsElement = Array.from(
-			fillTypesDoc.querySelectorAll("fillType")
-		).find((el) => el.getAttribute("name") === "WOODCHIPS");
-
-		if (woodchipsElement) {
-			const economy = woodchipsElement.querySelector("economy");
-			if (economy && economy.hasAttribute("pricePerLiter")) {
-				// Preis pro Liter in Preis pro 1000 Liter umrechnen und Schwierigkeitsfaktor anwenden
-				return (
-					parseFloat(economy.getAttribute("pricePerLiter") || "0") *
-					1000 *
-					difficultyFactor
-				);
-			}
-		}
-
-		// Fallback-Wert, falls Hackschnitzel nicht gefunden wurden
-		return 230; // Angenommener Durchschnittspreis für Hackschnitzel pro 1000 Liter
-	}
-
 	// Hilfsfunktion, um die Hackschnitzel-Daten zu extrahieren
 	function getWoodchipsData(fillTypesDoc: Document | null | undefined): {
 		basePrice: number;
