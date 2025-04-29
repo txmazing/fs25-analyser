@@ -1,6 +1,5 @@
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Percent } from "lucide-react";
 import React, { ReactNode } from "react";
 
 interface ToggleSwitchProps {
@@ -19,12 +18,8 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
 	return (
 		<div className='flex items-center justify-between space-x-2'>
 			<div className='flex items-center'>
-				{icon ? (
-					icon
-				) : label === "100% Bonus" ? (
-					<Percent size={18} className='text-ls-accent mr-2' />
-				) : null}
-				<Label htmlFor={`toggle-${label}`} className='text-foreground'>
+				{icon || null}
+				<Label htmlFor={`toggle-${label}`} className='text-sm font-medium'>
 					{label}
 				</Label>
 			</div>

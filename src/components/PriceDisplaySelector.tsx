@@ -21,12 +21,15 @@ const PriceDisplaySelector: React.FC<PriceDisplaySelectorProps> = ({
 }) => {
 	return (
 		<div>
-			<label className='block text-sm font-medium text-ls-text-primary mb-2 flex items-center gap-2'>
-				<Euro size={18} className='text-ls-accent' />
+			<label className='text-sm font-medium text-foreground mb-2 flex items-center gap-2'>
+				<Euro size={18} className='text-primary' />
 				Preisanzeige
 			</label>
-			<Select value={priceDisplay} onValueChange={setPriceDisplay as any}>
-				<SelectTrigger className='ls25-input'>
+			<Select
+				value={priceDisplay}
+				onValueChange={(value: PriceDisplay) => setPriceDisplay(value)}
+			>
+				<SelectTrigger className='h-9 w-full'>
 					<SelectValue placeholder='Preistyp wählen'>
 						{translatePriceType(priceDisplay)}
 					</SelectValue>

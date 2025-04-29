@@ -48,6 +48,9 @@ export interface ProductionData {
 	gainVsDirectSaleMax?: number; // Zusätzlicher Gewinn gegenüber direktem Verkauf (Maximalpreis)
 	gainVsDirectSalePercentBase?: number; // Prozentuale Steigerung gegenüber direktem Verkauf (Grundpreis)
 	gainVsDirectSalePercentMax?: number; // Prozentuale Steigerung gegenüber direktem Verkauf (Maximalpreis)
+	// Neue Felder für Mehrerlös pro Monat
+	gainPerMonthBase?: number; // Mehrerlös pro Monat (Grundpreis)
+	gainPerMonthMax?: number; // Mehrerlös pro Monat (Maximalpreis)
 }
 
 export interface XMLDocuments {

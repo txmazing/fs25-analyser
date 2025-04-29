@@ -1,6 +1,6 @@
 import AppContent from "./components/AppContent";
 import { ThemeProvider } from "./components/ThemeProvider";
-import "./index.css"; // Importiere die CSS-Datei mit Tailwind-Styles
+import "./index.css";
 
 function App() {
 	return (

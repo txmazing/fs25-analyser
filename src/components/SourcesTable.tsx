@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { PriceDisplay, SourceData } from "../types";
+import { ColumnDef } from "../types/table"; // Importiere die Typdefinitionen für die Spalten
 import { formatNumber } from "../utils/formatters";
 import {
 	translatePriceType,
@@ -24,20 +25,8 @@ import {
 
 // Eigene Typdefinitionen als Ersatz für @tanstack/react-table
 type SortingState = { id: string; desc: boolean }[];
-type ColumnFiltersState = { id: string; value: any }[];
+type ColumnFiltersState = { id: string; value: unknown }[];
 type VisibilityState = Record<string, boolean>;
-
-interface ColumnDef {
-	id: string;
-	label: string;
-	defaultVisible: boolean;
-	accessorFn: (row: any) => any;
-	header: () => React.ReactNode;
-	cell: (info: {
-		getValue: () => any;
-		row: { original: any };
-	}) => React.ReactNode;
-}
 
 interface SourcesTableProps {
 	data: SourceData[];
@@ -59,13 +48,13 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 	globalFilter,
 	setGlobalFilter,
 	columnFilters,
-	setColumnFilters,
+	// setColumnFilters wird derzeit nicht verwendet
 	includeStraw,
 	fullyFertilized,
 	priceDisplay,
 }) => {
 	// Definieren der Spalten
-	const allColumns = useMemo<ColumnDef[]>(
+	const allColumns = useMemo<ColumnDef<SourceData>[]>(
 		() => [
 			{
 				id: "name",
@@ -73,7 +62,7 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 				defaultVisible: true,
 				accessorFn: (row) => row.name,
 				header: () => "Ware",
-				cell: (info) => translateResourceName(info.getValue()),
+				cell: (info) => translateResourceName(info.getValue() as string),
 			},
 			{
 				id: "price",
@@ -103,7 +92,7 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 				accessorFn: (row) => row.strawYieldPerHa,
 				header: () => `Strohertrag/ha ${fullyFertilized ? "(100%)" : ""}`,
 				cell: (info) => {
-					const value = info.getValue();
+					const value = info.getValue() as number | undefined;
 					if (value) {
 						const effectiveValue = fullyFertilized ? value * 2 : value;
 						return `${formatNumber(effectiveValue)} l`;
@@ -136,10 +125,10 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 
 	// Initial sichtbare Spalten basierend auf defaultVisible-Eigenschaft
 	const initialVisibility = useMemo(() => {
-		return allColumns.reduce((acc, column) => {
-			acc[column.id] = column.defaultVisible;
+		return allColumns.reduce<Record<string, boolean>>((acc, column) => {
+			acc[column.id] = column.defaultVisible ?? true;
 			return acc;
-		}, {} as Record<string, boolean>);
+		}, {});
 	}, [allColumns]);
 
 	// State für Spaltensichtbarkeit
@@ -241,21 +230,22 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 
 	// Helper-Funktionen für die Tabelle
 	const handleToggleSort = (columnId: string) => {
-		setSorting((current) => {
-			// Finde den aktuellen Sortierstatus dieser Spalte
-			const existingSort = current.find((sort) => sort.id === columnId);
+		// Finde den aktuellen Sortierstatus dieser Spalte
+		const existingSort = sorting.find((sort) => sort.id === columnId);
 
-			if (!existingSort) {
-				// Wenn die Spalte noch nicht sortiert ist, füge sie hinzu (aufsteigend)
-				return [{ id: columnId, desc: false }];
-			} else if (!existingSort.desc) {
-				// Wenn die Spalte aufsteigend sortiert ist, wechsle zu absteigend
-				return [{ id: columnId, desc: true }];
-			} else {
-				// Wenn die Spalte absteigend sortiert ist, entferne die Sortierung
-				return [];
-			}
-		});
+		let newSorting: SortingState;
+		if (!existingSort) {
+			// Wenn die Spalte noch nicht sortiert ist, füge sie hinzu (aufsteigend)
+			newSorting = [{ id: columnId, desc: false }];
+		} else if (!existingSort.desc) {
+			// Wenn die Spalte aufsteigend sortiert ist, wechsle zu absteigend
+			newSorting = [{ id: columnId, desc: true }];
+		} else {
+			// Wenn die Spalte absteigend sortiert ist, entferne die Sortierung
+			newSorting = [];
+		}
+
+		setSorting(newSorting);
 	};
 
 	const getColumnSortDirection = (columnId: string) => {
@@ -286,34 +276,34 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 			<div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
 				<div className='relative w-full sm:w-auto sm:min-w-[300px]'>
 					<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-						<Search size={18} className='text-muted-foreground' />
+						<Search size={18} className='text-primary' />
 					</div>
 					<input
 						type='text'
 						value={globalFilter ?? ""}
 						onChange={(e) => setGlobalFilter(e.target.value)}
 						placeholder='Suchen...'
-						className='ls25-input max-w-md indent-6 w-full'
+						className='h-9 w-full rounded-md border border-input/30 bg-transparent py-2 pl-10 pr-3 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
 					/>
 				</div>
 
-				{/* Spaltenselektor-Dropdown wie in ProductionsTable */}
+				{/* Spaltenselektor-Dropdown mit besserem Design */}
 				<div className='relative'>
 					<Button
 						onClick={() => setShowColumnSelector(!showColumnSelector)}
 						variant='outline'
-						className='flex items-center gap-2 border-ls-accent/30 hover:border-ls-accent'
+						className='flex items-center gap-2 border-primary/20 hover:border-primary/50'
 					>
-						<Columns size={16} className='text-ls-accent' />
+						<Columns size={16} className='text-primary' />
 						<span>Spaltenauswahl</span>
 					</Button>
 
 					{showColumnSelector && (
 						<div
 							ref={columnSelectorRef}
-							className='absolute right-0 top-full mt-2 bg-ls-surface border border-muted rounded-lg shadow-lg z-50 w-72'
+							className='absolute right-0 top-full mt-2 bg-card border border-border/30 rounded-lg shadow-lg z-50 w-72'
 						>
-							<div className='p-3 border-b border-muted flex justify-between items-center'>
+							<div className='p-3 border-b border-border/30 flex justify-between items-center'>
 								<span className='font-medium text-sm'>Spalten anzeigen</span>
 								<div className='flex gap-2'>
 									<Button
@@ -338,8 +328,8 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 								{allColumns.map((column) => (
 									<div
 										key={column.id}
-										className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors ${
-											hoveredItem === column.id ? "bg-muted/30" : ""
+										className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-muted/30 transition-colors ${
+											hoveredItem === column.id ? "bg-muted/20" : ""
 										}`}
 										onMouseEnter={() => setHoveredItem(column.id)}
 										onMouseLeave={() => setHoveredItem(null)}
@@ -348,9 +338,7 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 										<span className='text-sm'>{column.label}</span>
 										<div
 											className={`w-10 h-5 rounded-full ${
-												columnVisibility[column.id]
-													? "bg-ls-accent"
-													: "bg-muted"
+												columnVisibility[column.id] ? "bg-primary" : "bg-muted"
 											} relative transition-colors`}
 										>
 											<div
@@ -371,33 +359,51 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 			</div>
 
 			{/* Verbesserte Tabelle mit konsistenten Abständen */}
-			<div className='overflow-x-auto -mx-4 sm:mx-0 rounded-md border border-muted'>
-				<Table className='ls25-table'>
+			<div className='overflow-x-auto rounded-md bg-card/50'>
+				<Table>
 					<TableHeader>
-						<TableRow>
-							{visibleColumns.map((column) => (
-								<TableHead
-									key={column.id}
-									className='group cursor-pointer hover:bg-muted/70 transition-colors'
-									onClick={() => handleToggleSort(column.id)}
-								>
-									<div className='flex items-center gap-2'>
-										{column.header()}
-										{getColumnSortDirection(column.id) === "asc" ? (
-											<ChevronUp className='w-4 h-4 text-ls-accent' />
-										) : getColumnSortDirection(column.id) === "desc" ? (
-											<ChevronDown className='w-4 h-4 text-ls-accent' />
-										) : (
-											<ArrowUpDown className='w-4 h-4 opacity-0 group-hover:opacity-100 text-muted-foreground' />
-										)}
-									</div>
-								</TableHead>
-							))}
+						<TableRow className='hover:bg-transparent border-b border-border/40'>
+							{visibleColumns.map((column) => {
+								const isNumeric = [
+									"Price",
+									"revenue",
+									"yield",
+									"erlös",
+									"price",
+								].some((term) =>
+									column.id.toLowerCase().includes(term.toLowerCase())
+								);
+
+								return (
+									<TableHead
+										key={column.id}
+										className={`group cursor-pointer hover:bg-muted/20 ${
+											isNumeric ? "text-right" : ""
+										}`}
+										onClick={() => handleToggleSort(column.id)}
+									>
+										<div
+											className={`flex items-center ${
+												isNumeric ? "justify-end" : ""
+											} gap-2`}
+										>
+											{column.header()}
+											{getColumnSortDirection(column.id) === "asc" ? (
+												<ChevronUp className='size-4 text-primary' />
+											) : getColumnSortDirection(column.id) === "desc" ? (
+												<ChevronDown className='size-4 text-primary' />
+											) : (
+												<ArrowUpDown className='size-4 opacity-0 group-hover:opacity-100 text-primary' />
+											)}
+										</div>
+									</TableHead>
+								);
+							})}
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{filteredData.map((row, rowIndex) => (
-							<TableRow key={rowIndex} className='transition-colors'>
+							<TableRow key={rowIndex} className='border-0 hover:bg-muted/10'>
 								{visibleColumns.map((column) => {
 									const value = column.accessorFn(row);
 
@@ -414,7 +420,9 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 									return (
 										<TableCell
 											key={column.id}
-											className={`p-3 ${isNumeric ? "numeric" : ""}`}
+											className={`p-3 border-0 ${
+												isNumeric ? "text-right" : ""
+											}`}
 										>
 											{column.cell({
 												getValue: () => value,
@@ -426,10 +434,10 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 							</TableRow>
 						))}
 						{filteredData.length === 0 && (
-							<TableRow>
+							<TableRow className='border-0'>
 								<TableCell
 									colSpan={visibleColumns.length}
-									className='h-24 text-center text-muted-foreground'
+									className='h-24 text-center text-muted-foreground border-0'
 								>
 									Keine Daten gefunden
 								</TableCell>

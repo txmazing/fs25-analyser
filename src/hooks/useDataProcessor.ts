@@ -54,11 +54,11 @@ export const useDataProcessor = () => {
 
 				// XML-Dateien als Text extrahieren
 				const xmlTexts = await Promise.all(
-					validResponses.map((response) => response.text())
+					validResponses.map((response) => response?.text())
 				);
 
 				// XML-Texte in DOM-Dokumente umwandeln
-				const xmlDocs = xmlTexts.map((text) => parseXML(text));
+				const xmlDocs = xmlTexts.map((text) => parseXML(text || ""));
 
 				// Extrahiere die benötigten Dokumente
 				const fillTypesDoc = xmlDocs.find(
@@ -110,7 +110,10 @@ export const useDataProcessor = () => {
 
 							// Wenn es ein Mapping für diesen Fruchttyp gibt, speichere den Ertrag
 							if (fruitName in fruitTypeToFillType) {
-								const fillType = fruitTypeToFillType[fruitName];
+								const fillType =
+									fruitTypeToFillType[
+										fruitName as keyof typeof fruitTypeToFillType
+									];
 								yieldData[fillType] = yieldPerHa;
 							}
 						}
@@ -128,7 +131,10 @@ export const useDataProcessor = () => {
 
 							// Wenn es ein Mapping für diesen Fruchttyp gibt, speichere den Strohertrag
 							if (fruitName in fruitTypeToFillType) {
-								const fillType = fruitTypeToFillType[fruitName];
+								const fillType =
+									fruitTypeToFillType[
+										fruitName as keyof typeof fruitTypeToFillType
+									];
 								strawYieldData[fillType] = strawLitersPerSqm * 10000; // Umrechnung zu Liter/ha
 								console.log(
 									`Strohertrag für ${fillType}: ${strawYieldData[fillType]} l/ha extrahiert`
@@ -518,6 +524,10 @@ export const useDataProcessor = () => {
 				let gainVsDirectSalePercentBase = 0;
 				let gainVsDirectSalePercentMax = 0;
 
+				// Neue Berechnung für Mehrerlös pro Monat
+				let gainPerMonthBase = 0;
+				let gainPerMonthMax = 0;
+
 				if (inputSource) {
 					// Wähle entweder den Preis mit oder ohne Stroh, je nach Einstellung
 					const directSaleRevenueBase =
@@ -550,6 +560,16 @@ export const useDataProcessor = () => {
 						gainVsDirectSalePercentMax =
 							(gainVsDirectSaleMax / directSaleRevenueMax) * 100;
 					}
+
+					// Berechne den Mehrerlös pro Monat
+					// Wert der verarbeiteten Ware pro Monat - Wert der Rohstoffe pro Monat
+					const rawMaterialValueBasePerMonth =
+						(inputSource.basePrice * inputAmountPerMonth!) / 1000;
+					const rawMaterialValueMaxPerMonth =
+						(inputSource.maxPrice * inputAmountPerMonth!) / 1000;
+
+					gainPerMonthBase = revenuePerMonthBase - rawMaterialValueBasePerMonth;
+					gainPerMonthMax = revenuePerMonthMax - rawMaterialValueMaxPerMonth;
 				}
 
 				// Return enriched production data
@@ -578,6 +598,9 @@ export const useDataProcessor = () => {
 					gainVsDirectSaleMax,
 					gainVsDirectSalePercentBase,
 					gainVsDirectSalePercentMax,
+					// Neue Berechnungswerte hinzufügen
+					gainPerMonthBase,
+					gainPerMonthMax,
 				};
 			});
 		};

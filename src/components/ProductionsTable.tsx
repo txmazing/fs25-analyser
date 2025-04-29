@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { PriceDisplay, ProductionData } from "../types";
+import { ColumnDef } from "../types/table"; // Importiere die Typdefinitionen für die Spalten
 import { formatNumber } from "../utils/formatters";
 import { translateResourceName } from "../utils/translators";
 import { Button } from "./ui/button";
@@ -21,19 +22,20 @@ import {
 
 // Eigene Typdefinitionen als Ersatz für @tanstack/react-table
 type SortingState = { id: string; desc: boolean }[];
-type ColumnFiltersState = { id: string; value: any }[];
+type ColumnFiltersState = { id: string; value: unknown }[];
 type VisibilityState = Record<string, boolean>;
 
-interface ColumnDef {
-	id: string;
-	label: string;
-	defaultVisible: boolean;
-	accessorFn: (row: any) => any;
-	header: () => React.ReactNode;
-	cell: (info: {
-		getValue: () => any;
-		row: { original: any };
-	}) => React.ReactNode;
+// Typ für die vorverarbeiteten Produktionsdaten
+interface ProcessedProductionData extends ProductionData {
+	displayInputPrice: number; // Neues Feld für den dynamischen Eingabepreis
+	displayOutputPrice: number;
+	displayValueAddedFactor: number;
+	displayRevenuePerMonth: number;
+	displayRevenuePerHectare: number;
+	displayRevenueWithStrawPerHectare: number;
+	displayGainVsDirectSale: number;
+	displayGainVsDirectSalePercent: number;
+	displayGainPerMonth: number;
 }
 
 interface ProductionsTableProps {
@@ -54,7 +56,7 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 	globalFilter,
 	setGlobalFilter,
 	columnFilters,
-	setColumnFilters,
+	// setColumnFilters wird derzeit nicht verwendet
 	priceDisplay,
 }) => {
 	// Process the data dynamically based on priceDisplay
@@ -64,15 +66,22 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 			const maxOutputPrice =
 				item.outputPriceMax || item.outputPrice * (item.maxPriceFactor || 1.0);
 
+			// Bestimme den dynamischen Eingabepreis basierend auf priceDisplay
+			// Für die Max-Preise verwenden wir den inputMaxPrice, falls verfügbar, oder schätzen ihn
+			const maxInputPrice = item.inputPrice * (item.maxPriceFactor || 1.0);
+			const displayInputPrice =
+				priceDisplay === "base" ? item.inputPrice : maxInputPrice;
+
 			// Dynamic value added factor
 			const baseValueAddedFactor = item.valueAddedFactor;
 			const maxValueAddedFactor =
 				(maxOutputPrice * item.outputAmount) /
-				(item.inputPrice * item.inputAmount);
+				(maxInputPrice * item.inputAmount);
 
 			return {
 				...item,
 				// Pre-compute displayed values based on price display
+				displayInputPrice, // Neues Feld für den Eingabepreis
 				displayOutputPrice:
 					priceDisplay === "base" ? item.outputPrice : maxOutputPrice,
 				displayValueAddedFactor:
@@ -83,26 +92,31 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 						: item.revenuePerMonthMax,
 				displayRevenuePerHectare:
 					priceDisplay === "base"
-						? item.revenuePerHectareBase
-						: item.revenuePerHectareMax,
+						? item.revenuePerHectareBase || 0
+						: item.revenuePerHectareMax || 0,
 				displayRevenueWithStrawPerHectare:
 					priceDisplay === "base"
-						? item.revenueWithStrawPerHectareBase
-						: item.revenueWithStrawPerHectareMax,
+						? item.revenueWithStrawPerHectareBase || 0
+						: item.revenueWithStrawPerHectareMax || 0,
 				displayGainVsDirectSale:
 					priceDisplay === "base"
-						? item.gainVsDirectSaleBase
-						: item.gainVsDirectSaleMax,
+						? item.gainVsDirectSaleBase || 0
+						: item.gainVsDirectSaleMax || 0,
 				displayGainVsDirectSalePercent:
 					priceDisplay === "base"
-						? item.gainVsDirectSalePercentBase
-						: item.gainVsDirectSalePercentMax,
+						? item.gainVsDirectSalePercentBase || 0
+						: item.gainVsDirectSalePercentMax || 0,
+				// Neue Anzeigewerte
+				displayGainPerMonth:
+					priceDisplay === "base"
+						? item.gainPerMonthBase || 0
+						: item.gainPerMonthMax || 0,
 			};
 		});
 	}, [data, priceDisplay]);
 
 	// Definieren aller verfügbaren Spalten
-	const allColumns = useMemo<ColumnDef[]>(
+	const allColumns = useMemo<ColumnDef<ProcessedProductionData>[]>(
 		() => [
 			{
 				id: "production",
@@ -110,7 +124,7 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 				defaultVisible: true,
 				accessorFn: (row) => row.production,
 				header: () => "Produktionen",
-				cell: (info) => info.getValue(),
+				cell: (info) => info.getValue() as string,
 			},
 			{
 				id: "input",
@@ -123,7 +137,7 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 			{
 				id: "inputAmount",
 				label: "Input/Zyklus",
-				defaultVisible: true,
+				defaultVisible: false,
 				accessorFn: (row) => row.inputAmount,
 				header: () => "Input/Zyklus",
 				cell: (info) => formatNumber(info.getValue() as number),
@@ -139,7 +153,7 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 			{
 				id: "outputAmount",
 				label: "Output/Zyklus",
-				defaultVisible: true,
+				defaultVisible: false,
 				accessorFn: (row) => row.outputAmount,
 				header: () => "Output/Zyklus",
 				cell: (info) => formatNumber(info.getValue() as number),
@@ -148,7 +162,7 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 				id: "inputPrice",
 				label: "Eingabepreis",
 				defaultVisible: false,
-				accessorFn: (row) => row.inputPrice,
+				accessorFn: (row) => row.displayInputPrice, // Verwende den dynamischen Wert
 				header: () => "Eingabepreis",
 				cell: (info) => `${formatNumber(info.getValue() as number)} €`,
 			},
@@ -156,17 +170,10 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 				id: "outputPrice",
 				label: "Ausgabepreis",
 				defaultVisible: true,
-				accessorFn: (row) => row.displayOutputPrice,
+				accessorFn: (row) =>
+					"displayOutputPrice" in row ? row.displayOutputPrice : 0,
 				header: () => "Ausgabepreis",
 				cell: (info) => `${formatNumber(info.getValue() as number)} €`,
-			},
-			{
-				id: "cycleTime",
-				label: "Zyklusdauer",
-				defaultVisible: false,
-				accessorFn: (row) => row.cycleTime,
-				header: () => "Zyklusdauer",
-				cell: (info) => `${formatNumber(info.getValue() as number)} Std.`,
 			},
 			{
 				id: "cyclesPerMonth",
@@ -180,7 +187,8 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 				id: "valueAddedFactor",
 				label: "Wertschöpfung",
 				defaultVisible: true,
-				accessorFn: (row) => row.displayValueAddedFactor,
+				accessorFn: (row) =>
+					"displayValueAddedFactor" in row ? row.displayValueAddedFactor : 0,
 				header: () => "Wertschöpfung",
 				cell: (info) => formatNumber(info.getValue() as number),
 			},
@@ -188,7 +196,8 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 				id: "revenuePerMonth",
 				label: "Erlös/Monat",
 				defaultVisible: false,
-				accessorFn: (row) => row.displayRevenuePerMonth,
+				accessorFn: (row) =>
+					"displayRevenuePerMonth" in row ? row.displayRevenuePerMonth : 0,
 				header: () => "Erlös/Monat",
 				cell: (info) => `${formatNumber(info.getValue() as number)} €`,
 			},
@@ -196,7 +205,8 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 				id: "revenuePerHectare",
 				label: "Erlös/Hektar",
 				defaultVisible: false,
-				accessorFn: (row) => row.displayRevenuePerHectare,
+				accessorFn: (row) =>
+					"displayRevenuePerHectare" in row ? row.displayRevenuePerHectare : 0,
 				header: () => "Erlös/Hektar",
 				cell: (info) => `${formatNumber(info.getValue() as number)} €`,
 			},
@@ -204,56 +214,81 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 				id: "hectaresPerMonth",
 				label: "Hektar/Monat",
 				defaultVisible: false,
-				accessorFn: (row) => row.hectaresPerMonth,
+				accessorFn: (row) =>
+					"hectaresNeededPerMonth" in row ? row.hectaresNeededPerMonth || 0 : 0,
 				header: () => "Hektar/Monat",
 				cell: (info) => formatNumber(info.getValue() as number),
 			},
 			{
-				id: "gainVsDirectSale",
-				label: "Mehrerlös/Zyklus",
-				defaultVisible: false,
-				accessorFn: (row) => row.displayGainVsDirectSale,
-				header: () => "Mehrerlös/Zyklus",
+				id: "gainPerMonth",
+				label: "Mehrerlös/Monat",
+				defaultVisible: true,
+				accessorFn: (row) =>
+					"displayGainPerMonth" in row ? row.displayGainPerMonth : 0,
+				header: () => `Mehrerlös/Monat`,
 				cell: (info) => {
-					const value = info.getValue();
+					const value = info.getValue() as number | undefined;
 					if (value === undefined || value === null) return "-";
 
-					const formattedValue = `${formatNumber(value as number)} €`;
-					return (value as number) >= 0 ? (
+					const formattedValue = `${formatNumber(value)} €`;
+					return value >= 0 ? (
 						<span>{formattedValue}</span>
 					) : (
-						<span className='text-ls-danger'>{formattedValue}</span>
+						<span className='text-destructive'>{formattedValue}</span>
 					);
 				},
 			},
 			{
-				id: "gainVsDirectSalePercent",
-				label: "Mehrerlös %",
+				id: "gainVsDirectSale",
+				label: "Mehrerlös/Hektar",
 				defaultVisible: true,
-				accessorFn: (row) => row.displayGainVsDirectSalePercent,
-				header: () => `Mehrerlös %`,
+				accessorFn: (row) =>
+					"displayGainVsDirectSale" in row ? row.displayGainVsDirectSale : 0,
+				header: () => `Mehrerlös/Hektar`,
 				cell: (info) => {
-					const value = info.getValue();
+					const value = info.getValue() as number | undefined;
 					if (value === undefined || value === null) return "-";
 
-					const formattedValue = `${formatNumber(value as number)} %`;
-					return (value as number) >= 0 ? (
+					const formattedValue = `${formatNumber(value)} €`;
+					return value >= 0 ? (
 						<span>{formattedValue}</span>
 					) : (
-						<span className='text-ls-danger'>{formattedValue}</span>
+						<span className='text-destructive'>{formattedValue}</span>
+					);
+				},
+			},
+
+			{
+				id: "gainVsDirectSalePercent",
+				label: "Mehrerlös %",
+				defaultVisible: false,
+				accessorFn: (row) =>
+					"displayGainVsDirectSalePercent" in row
+						? row.displayGainVsDirectSalePercent
+						: 0,
+				header: () => `Mehrerlös %`,
+				cell: (info) => {
+					const value = info.getValue() as number | undefined;
+					if (value === undefined || value === null) return "-";
+
+					const formattedValue = `${formatNumber(value)} %`;
+					return value >= 0 ? (
+						<span>{formattedValue}</span>
+					) : (
+						<span className='text-destructive'>{formattedValue}</span>
 					);
 				},
 			},
 		],
-		[priceDisplay]
+		[]
 	);
 
 	// Initial sichtbare Spalten basierend auf defaultVisible-Eigenschaft
 	const initialVisibility = useMemo(() => {
-		return allColumns.reduce((acc, column) => {
-			acc[column.id] = column.defaultVisible;
+		return allColumns.reduce<Record<string, boolean>>((acc, column) => {
+			acc[column.id] = column.defaultVisible ?? true;
 			return acc;
-		}, {} as Record<string, boolean>);
+		}, {});
 	}, [allColumns]);
 
 	// State für Spaltensichtbarkeit
@@ -355,34 +390,38 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 
 	// Helper-Funktionen für die Tabelle
 	const handleToggleSort = (columnId: string) => {
-		setSorting((current) => {
-			// Finde den aktuellen Sortierstatus dieser Spalte
-			const existingSort = current.find((sort) => sort.id === columnId);
+		// Finde den aktuellen Sortierstatus dieser Spalte
+		const existingSort = sorting.find((sort) => sort.id === columnId);
 
-			if (!existingSort) {
-				// Wenn die Spalte noch nicht sortiert ist, füge sie hinzu (aufsteigend)
-				return [{ id: columnId, desc: false }];
-			} else if (!existingSort.desc) {
-				// Wenn die Spalte aufsteigend sortiert ist, wechsle zu absteigend
-				return [{ id: columnId, desc: true }];
-			} else {
-				// Wenn die Spalte absteigend sortiert ist, entferne die Sortierung
-				return [];
-			}
-		});
+		let newSorting: SortingState;
+		if (!existingSort) {
+			// Wenn die Spalte noch nicht sortiert ist, füge sie hinzu (aufsteigend)
+			newSorting = [{ id: columnId, desc: false }];
+		} else if (!existingSort.desc) {
+			// Wenn die Spalte aufsteigend sortiert ist, wechsle zu absteigend
+			newSorting = [{ id: columnId, desc: true }];
+		} else {
+			// Wenn die Spalte absteigend sortiert ist, entferne die Sortierung
+			newSorting = [];
+		}
+
+		setSorting(newSorting);
 	};
 
-	const getColumnSortDirection = (columnId: string) => {
+	const getColumnSortDirection = (columnId: string): "asc" | "desc" | null => {
 		const sort = sorting.find((sort) => sort.id === columnId);
 		return sort ? (sort.desc ? "desc" : "asc") : null;
 	};
 
 	// Handler für das Umschalten aller Spalten
 	const toggleAllColumns = (value: boolean) => {
-		const newVisibility = allColumns.reduce((acc, column) => {
-			acc[column.id] = value;
-			return acc;
-		}, {} as Record<string, boolean>);
+		const newVisibility = allColumns.reduce<Record<string, boolean>>(
+			(acc, column) => {
+				acc[column.id] = value;
+				return acc;
+			},
+			{}
+		);
 		setColumnVisibility(newVisibility);
 	};
 
@@ -403,14 +442,14 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 			<div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4'>
 				<div className='relative w-full sm:w-auto sm:min-w-[300px]'>
 					<div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-						<Search size={18} className='text-muted-foreground' />
+						<Search size={18} className='text-primary' />
 					</div>
 					<input
 						type='text'
 						value={globalFilter ?? ""}
 						onChange={(e) => setGlobalFilter(e.target.value)}
 						placeholder='Suchen...'
-						className='ls25-input max-w-md indent-6 w-full'
+						className='h-9 w-full rounded-md border border-input/30 bg-transparent py-2 pl-10 pr-3 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
 					/>
 				</div>
 
@@ -419,18 +458,18 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 					<Button
 						onClick={() => setShowColumnSelector(!showColumnSelector)}
 						variant='outline'
-						className='flex items-center gap-2 border-ls-accent/30 hover:border-ls-accent'
+						className='flex items-center gap-2 border-primary/20 hover:border-primary/50'
 					>
-						<Columns size={16} className='text-ls-accent' />
+						<Columns size={16} className='text-primary' />
 						<span>Spaltenauswahl</span>
 					</Button>
 
 					{showColumnSelector && (
 						<div
 							ref={columnSelectorRef}
-							className='absolute right-0 top-full mt-2 bg-ls-surface border border-muted rounded-lg shadow-lg z-50 w-72'
+							className='absolute right-0 top-full mt-2 bg-card border border-border/30 rounded-lg shadow-lg z-50 w-72'
 						>
-							<div className='p-3 border-b border-muted flex justify-between items-center'>
+							<div className='p-3 border-b border-border/30 flex justify-between items-center'>
 								<span className='font-medium text-sm'>Spalten anzeigen</span>
 								<div className='flex gap-2'>
 									<Button
@@ -455,8 +494,8 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 								{allColumns.map((column) => (
 									<div
 										key={column.id}
-										className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-muted/50 transition-colors ${
-											hoveredItem === column.id ? "bg-muted/30" : ""
+										className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-muted/30 transition-colors ${
+											hoveredItem === column.id ? "bg-muted/20" : ""
 										}`}
 										onMouseEnter={() => setHoveredItem(column.id)}
 										onMouseLeave={() => setHoveredItem(null)}
@@ -465,9 +504,7 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 										<span className='text-sm'>{column.label}</span>
 										<div
 											className={`w-10 h-5 rounded-full ${
-												columnVisibility[column.id]
-													? "bg-ls-accent"
-													: "bg-muted"
+												columnVisibility[column.id] ? "bg-primary" : "bg-muted"
 											} relative transition-colors`}
 										>
 											<div
@@ -488,36 +525,53 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 			</div>
 
 			{/* Tabelle mit verbessertem Design */}
-			<div
-				className='overflow-x-auto -mx-4 sm:mx-0 rounded-md border border-muted'
-				key={resetKey}
-			>
-				<Table className='ls25-table'>
+			<div className='overflow-x-auto rounded-md bg-card/50' key={resetKey}>
+				<Table>
 					<TableHeader>
-						<TableRow>
-							{visibleColumns.map((column) => (
-								<TableHead
-									key={column.id}
-									className='group cursor-pointer hover:bg-muted/70 transition-colors'
-									onClick={() => handleToggleSort(column.id)}
-								>
-									<div className='flex items-center gap-2'>
-										{column.header()}
-										{getColumnSortDirection(column.id) === "asc" ? (
-											<ChevronUp className='w-4 h-4 text-ls-accent' />
-										) : getColumnSortDirection(column.id) === "desc" ? (
-											<ChevronDown className='w-4 h-4 text-ls-accent' />
-										) : (
-											<ArrowUpDown className='w-4 h-4 opacity-0 group-hover:opacity-100 text-muted-foreground' />
-										)}
-									</div>
-								</TableHead>
-							))}
+						<TableRow className='hover:bg-transparent border-b border-border/40'>
+							{visibleColumns.map((column) => {
+								const isNumeric = [
+									"Price",
+									"revenue",
+									"gain",
+									"Amount",
+									"cycles",
+									"hectares",
+									"erlös",
+								].some((term) =>
+									column.id.toLowerCase().includes(term.toLowerCase())
+								);
+
+								return (
+									<TableHead
+										key={column.id}
+										className={`group cursor-pointer hover:bg-muted/20 ${
+											isNumeric ? "text-right" : ""
+										}`}
+										onClick={() => handleToggleSort(column.id)}
+									>
+										<div
+											className={`flex items-center ${
+												isNumeric ? "justify-end" : ""
+											} gap-2`}
+										>
+											{column.header()}
+											{getColumnSortDirection(column.id) === "asc" ? (
+												<ChevronUp className='size-4 text-primary' />
+											) : getColumnSortDirection(column.id) === "desc" ? (
+												<ChevronDown className='size-4 text-primary' />
+											) : (
+												<ArrowUpDown className='size-4 opacity-0 group-hover:opacity-100 text-primary' />
+											)}
+										</div>
+									</TableHead>
+								);
+							})}
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{filteredData.map((row, rowIndex) => (
-							<TableRow key={rowIndex} className='transition-colors'>
+							<TableRow key={rowIndex} className='border-0 hover:bg-muted/10'>
 								{visibleColumns.map((column) => {
 									const value = column.accessorFn(row);
 
@@ -542,18 +596,18 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 									let textColor = "";
 									if (isComparisonField) {
 										const isNumber = typeof value === "number";
-										if (isNumber && (value as number) > 0) {
+										if (isNumber && value > 0) {
 											textColor = "text-emerald-600 dark:text-emerald-400";
-										} else if (isNumber && (value as number) < 0) {
-											textColor = "text-ls-danger";
+										} else if (isNumber && value < 0) {
+											textColor = "text-destructive";
 										}
 									}
 
 									return (
 										<TableCell
 											key={column.id}
-											className={`p-3 ${
-												isNumeric ? "numeric" : ""
+											className={`p-3 border-0 ${
+												isNumeric ? "text-right" : ""
 											} ${textColor}`}
 										>
 											{column.cell({
@@ -566,10 +620,10 @@ const ProductionsTable: React.FC<ProductionsTableProps> = ({
 							</TableRow>
 						))}
 						{filteredData.length === 0 && (
-							<TableRow>
+							<TableRow className='border-0'>
 								<TableCell
 									colSpan={visibleColumns.length}
-									className='h-24 text-center text-muted-foreground'
+									className='h-24 text-center text-muted-foreground border-0'
 								>
 									Keine Daten gefunden
 								</TableCell>

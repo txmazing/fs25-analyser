@@ -1,7 +1,9 @@
 import { Factory, Settings, Tractor, Wheat } from "lucide-react";
 import React, { useState } from "react";
 import { useDataProcessor } from "../hooks/useDataProcessor";
+import { Difficulty } from "../types";
 import { ColumnFiltersState, SortingState } from "../types/table";
+
 import { ModeToggle } from "./ModeToggle";
 import PriceDisplaySelector from "./PriceDisplaySelector";
 import ProductionsTable from "./ProductionsTable";
@@ -49,13 +51,20 @@ const AppContent: React.FC = () => {
 	const [productionColumnFilters, setProductionColumnFilters] =
 		useState<ColumnFiltersState>([]);
 
+	// Handler für die Schwierigkeitsauswahl mit korrekter Typisierung
+	const handleDifficultyChange = (value: string) => {
+		setDifficulty(value as Difficulty);
+	};
+
 	if (isLoading) {
 		return (
-			<div className='flex items-center justify-center h-screen bg-ls-bg text-ls-text-primary'>
+			<div className='flex items-center justify-center min-h-screen bg-background'>
 				<div className='flex flex-col items-center'>
-					<Tractor size={48} className='text-ls-accent mb-4 animate-bounce' />
-					<p className='text-xl font-semibold mb-6'>Daten werden geladen...</p>
-					<div className='loading-bar w-64'></div>
+					<Tractor size={48} className='text-primary mb-4 animate-bounce' />
+					<p className='text-xl font-medium mb-6'>Daten werden geladen...</p>
+					<div className='w-64 h-1 relative bg-primary/10 overflow-hidden rounded'>
+						<div className='absolute top-0 left-0 w-1/2 h-full bg-primary animate-[slide_1.5s_infinite]'></div>
+					</div>
 				</div>
 			</div>
 		);
@@ -63,12 +72,12 @@ const AppContent: React.FC = () => {
 
 	if (error) {
 		return (
-			<div className='flex items-center justify-center h-screen bg-ls-bg'>
-				<div className='ls25-card max-w-lg'>
-					<h3 className='font-medium text-ls-danger text-xl mb-3'>Fehler</h3>
-					<p className='text-ls-text-primary mb-4'>{error}</p>
+			<div className='flex items-center justify-center min-h-screen bg-background'>
+				<div className='max-w-lg p-6 bg-card rounded-lg shadow-md'>
+					<h3 className='font-medium text-destructive text-xl mb-3'>Fehler</h3>
+					<p className='text-foreground mb-4'>{error}</p>
 					<button
-						className='bg-ls-accent text-white px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors'
+						className='bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-opacity-90 transition-colors'
 						onClick={() => window.location.reload()}
 					>
 						Neu laden
@@ -79,14 +88,14 @@ const AppContent: React.FC = () => {
 	}
 
 	return (
-		<div className='min-h-screen bg-ls-bg'>
+		<div className='min-h-screen bg-background text-foreground'>
 			{/* Header - verbessert mit sticky positioning und besseren Abständen */}
-			<header className='ls25-header'>
-				<div className='ls25-content flex items-center justify-between w-full'>
+			<header className='sticky top-0 z-10 w-full border-b border-border/40 bg-background/80 backdrop-blur'>
+				<div className='max-w-5xl mx-auto flex h-16 items-center justify-between px-4'>
 					<div className='flex items-center gap-3'>
-						<Tractor size={32} className='text-ls-accent' />
+						<Tractor size={32} className='text-primary' />
 						<h1 className='text-2xl sm:text-3xl font-bold tracking-tight'>
-							<span className='text-ls-accent'>FS25</span>
+							<span className='text-primary'>FS25</span>
 							<span className='text-foreground'> ANALYSER</span>
 						</h1>
 					</div>
@@ -94,22 +103,25 @@ const AppContent: React.FC = () => {
 				</div>
 			</header>
 
-			<main className='ls25-content pb-12'>
+			<main className='max-w-5xl mx-auto px-4 py-6 pb-12'>
 				{/* Einstellungskarte mit verbesserten Abständen und Schatten */}
-				<section className='ls25-section'>
-					<div className='ls25-card'>
-						<h2 className='text-lg font-medium mb-6 pb-2 border-b border-muted'>
+				<section className='space-y-6'>
+					<div className='p-6 bg-card rounded-lg shadow-md'>
+						<h2 className='text-lg font-medium mb-6 pb-2 border-b border-border/40'>
 							Einstellungen
 						</h2>
 						<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
 							{/* Schwierigkeit mit verbessertem Styling */}
 							<div>
-								<label className='block text-sm font-medium text-ls-text-primary mb-2 flex items-center gap-2'>
-									<Settings size={18} className='text-ls-accent' />
+								<label className='text-sm font-medium text-foreground mb-2 flex items-center gap-2'>
+									<Settings size={18} className='text-primary' />
 									Schwierigkeit
 								</label>
-								<Select value={difficulty} onValueChange={setDifficulty}>
-									<SelectTrigger className='ls25-input'>
+								<Select
+									value={difficulty}
+									onValueChange={handleDifficultyChange}
+								>
+									<SelectTrigger className='h-9 w-full'>
 										<SelectValue placeholder='Schwierigkeit wählen' />
 									</SelectTrigger>
 									<SelectContent>
@@ -132,29 +144,30 @@ const AppContent: React.FC = () => {
 									isOn={includeStraw}
 									onToggle={() => setIncludeStraw(!includeStraw)}
 									label='Stroh einbeziehen'
-									icon={<Wheat size={18} className='text-ls-accent mr-2' />}
+									icon={<Wheat size={18} className='text-primary mr-2' />}
 								/>
 
 								<ToggleSwitch
 									isOn={fullyFertilized}
 									onToggle={() => setFullyFertilized(!fullyFertilized)}
 									label='100% Bonus'
+									icon={<span className='text-primary mr-2'>%</span>}
 								/>
 							</div>
 						</div>
 					</div>
 
 					{/* Tabs mit verbessertem Styling */}
-					<div className='mb-6'>
+					<div className='p-1 bg-muted/30 rounded-lg'>
 						<TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
 					</div>
 
 					{/* Tab Content mit verbessertem Styling */}
-					<div className='ls25-card'>
+					<div className='p-6 bg-card rounded-lg shadow-md'>
 						{activeTab === "sources" ? (
 							<>
-								<h2 className='text-lg font-medium mb-6 pb-2 border-b border-muted flex items-center gap-2'>
-									<Wheat size={20} className='text-ls-accent' />
+								<h2 className='text-lg font-medium mb-6 pb-2 border-b border-border/40 flex items-center gap-2'>
+									<Wheat size={20} className='text-primary' />
 									Feldfrüchte
 								</h2>
 								<SourcesTable
@@ -172,8 +185,8 @@ const AppContent: React.FC = () => {
 							</>
 						) : (
 							<>
-								<h2 className='text-lg font-medium mb-6 pb-2 border-b border-muted flex items-center gap-2'>
-									<Factory size={20} className='text-ls-accent' />
+								<h2 className='text-lg font-medium mb-6 pb-2 border-b border-border/40 flex items-center gap-2'>
+									<Factory size={20} className='text-primary' />
 									Produktionen
 								</h2>
 								<ProductionsTable
@@ -193,8 +206,8 @@ const AppContent: React.FC = () => {
 			</main>
 
 			{/* Footer */}
-			<footer className='py-4 border-t border-muted'>
-				<div className='ls25-content text-center text-sm text-ls-text-secondary'>
+			<footer className='py-4 border-t border-border/40'>
+				<div className='max-w-5xl mx-auto px-4 text-center text-sm text-muted-foreground'>
 					<p>
 						FS25 Analyser • Daten basierend auf Farming Simulator 25 v1.7.0.0
 					</p>
