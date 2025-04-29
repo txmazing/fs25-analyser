@@ -32,11 +32,16 @@ export const useDataProcessor = () => {
 			setIsLoading(true);
 			setError(null);
 
+			// Check if Url contains /fs25-analyser/
+			const baseUrl = window.location.href.includes("/fs25-analyser")
+				? "/fs25-analyser"
+				: "";
+
 			try {
 				// Alle XML-Dateien parallel laden
 				const fileResponses = await Promise.all(
 					XML_FILES.map((file) =>
-						fetch(file).catch((error) => {
+						fetch(baseUrl + file).catch((error) => {
 							console.warn(`Konnte ${file} nicht laden:`, error);
 							return null; // Erlaube es, dass einzelne Dateien fehlen können
 						})
