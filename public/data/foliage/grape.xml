@@ -1,0 +1,372 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<foliageType xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../shared/xml/schema/foliageType.xsd">
+    <fruitType name="grape" shownOnMap="true" useForFieldMissions="false">
+        <mapColors default="0.1046 0.1022 0.2664 1" colorBlind="0.0252 0.0356 0.0976 1"/>
+        <harvest litersPerSqm="1.84" cutHeight="0.20"> <!-- !!!doubled litersPerSqm because of row spaces!!! -->
+            <transition src="harvestReady" target="harvested"/>
+            <transition src="harvestReadyWeed" target="harvestedWeed"/>
+        </harvest>
+        <growth resetsSpray="true" growthRequiresLime="true"/>
+        <soil lowDensityRequired="true" increasesDensity="true" consumesLime="true" startSprayLevel="0"/>
+        <seeding directionSnapAngle="0" litersPerSqm="0" isAvailable="false"/>
+        <cultivation isAllowed="false"/>
+    </fruitType>
+
+    <!-- grape
+
+    0 1 2 3
+
+    0 1 0 0 - no leaves
+    1 1 0 0 - no leaves
+    0 0 1 0 - green small
+    1 0 1 0 - green small 2
+    0 1 1 0 - green big
+    1 1 1 0 - green big 2
+    0 0 0 1 - harvest ready
+    1 0 0 1 - dead
+    0 1 0 1 - harvested (cut)
+
+    -->
+    <foliageLayer densityMapChannelOffset="0" numDensityMapChannels="4" numBlocksPerUnit="1.8" shapeSource="grape.i3d" alignsToSun="false">
+        <foliageStateDefaults distanceMapLayer="1" width="1.0" height="1.0" widthVariance="0.2" heightVariance="0.2" horizontalPositionVariance="0.5"/>
+        <!-- default LOD distances etc -->
+        <foliageLodDefaults lod="0" viewDistance="18" blendOutDistance="2" atlasSize="1" atlasOffset="1 0" texCoords="0 0 1 1"/>
+        <foliageLodDefaults lod="1" viewDistance="80" blendOutDistance="2" atlasSize="1" atlasOffset="1 0" texCoords="0 0 1 1"/>
+        <!-- 1 : NO LEAVES -->
+        <foliageState name="noLeaves" distanceMap="distance/foliage_grape_distance_diffuse.png" isGrowing="true">
+            <foliageShape>
+                <foliageLod blockShape="0>0|0"/>
+                <foliageLod blockShape="0>1|0"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|1"/>
+                <foliageLod blockShape="0>1|1"/>
+            </foliageShape>
+        </foliageState>
+        <!-- 2 & 3 : GREEN SMALL -->
+        <foliageState name="greenSmall" distanceMap="distance/foliage_grape_distance_diffuse.png" isGrowing="true">
+            <foliageShape>
+                <foliageLod blockShape="0>0|0"/>
+                <foliageLod blockShape="0>1|0"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|1"/>
+                <foliageLod blockShape="0>1|1"/>
+            </foliageShape>
+        </foliageState>
+        <foliageState name="greenSmallWeed" distanceMap="distance/foliage_grapeWeed_distance_diffuse.png" isCultivatable="false" isGrowing="true">
+            <foliageShape>
+                <foliageLod blockShape="0>0|2"/>
+                <foliageLod blockShape="0>1|2"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|3"/>
+                <foliageLod blockShape="0>1|3"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|4"/>
+                <foliageLod blockShape="0>1|4"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|5"/>
+                <foliageLod blockShape="0>1|5"/>
+            </foliageShape>
+        </foliageState>
+        <!-- 4 & 5 : GREEN SMALL 2 -->
+        <foliageState name="greenSmall2" distanceMap="distance/foliage_grape_distance_diffuse.png" isGrowing="true">
+            <foliageShape>
+                <foliageLod blockShape="0>0|0"/>
+                <foliageLod blockShape="0>1|0"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|1"/>
+                <foliageLod blockShape="0>1|1"/>
+            </foliageShape>
+        </foliageState>
+        <foliageState name="greenSmall2Weed" distanceMap="distance/foliage_grapeWeed_distance_diffuse.png" isCultivatable="false" isGrowing="true">
+            <foliageShape>
+                <foliageLod blockShape="0>0|2"/>
+                <foliageLod blockShape="0>1|2"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|3"/>
+                <foliageLod blockShape="0>1|3"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|4"/>
+                <foliageLod blockShape="0>1|4"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|5"/>
+                <foliageLod blockShape="0>1|5"/>
+            </foliageShape>
+        </foliageState>
+        <!-- 6 & 7 : GREEN BIG -->
+        <foliageState name="greenBig" distanceMap="distance/foliage_grape_distance_diffuse.png" isGrowing="true">
+            <foliageShape>
+                <foliageLod blockShape="0>0|0"/>
+                <foliageLod blockShape="0>1|0"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|1"/>
+                <foliageLod blockShape="0>1|1"/>
+            </foliageShape>
+        </foliageState>
+        <foliageState name="greenBigWeed" distanceMap="distance/foliage_grapeWeed_distance_diffuse.png" isCultivatable="false" isGrowing="true">
+            <foliageShape>
+                <foliageLod blockShape="0>0|2"/>
+                <foliageLod blockShape="0>1|2"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|3"/>
+                <foliageLod blockShape="0>1|3"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|4"/>
+                <foliageLod blockShape="0>1|4"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|5"/>
+                <foliageLod blockShape="0>1|5"/>
+            </foliageShape>
+        </foliageState>
+        <!-- 8 & 9 : GREEN BIG 2 -->
+        <foliageState name="greenBig2" distanceMap="distance/foliage_grape_distance_diffuse.png">
+            <foliageShape>
+                <foliageLod blockShape="0>0|0"/>
+                <foliageLod blockShape="0>1|0"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|1"/>
+                <foliageLod blockShape="0>1|1"/>
+            </foliageShape>
+        </foliageState>
+        <foliageState name="greenBig2Weed" distanceMap="distance/foliage_grapeWeed_distance_diffuse.png" isCultivatable="false">
+            <foliageShape>
+                <foliageLod blockShape="0>0|2"/>
+                <foliageLod blockShape="0>1|2"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|3"/>
+                <foliageLod blockShape="0>1|3"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|4"/>
+                <foliageLod blockShape="0>1|4"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|5"/>
+                <foliageLod blockShape="0>1|5"/>
+            </foliageShape>
+        </foliageState>
+        <!-- 10 & 11 : HARVEST READY -->
+        <foliageState name="harvestReady" distanceMap="distance/foliage_grape_distance_diffuse.png" isCultivatable="false" isHarvestReady="true">
+            <foliageShape>
+                <foliageLod blockShape="0>0|0"/>
+                <foliageLod blockShape="0>1|0"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|1"/>
+                <foliageLod blockShape="0>1|1"/>
+            </foliageShape>
+        </foliageState>
+        <foliageState name="harvestReadyWeed" distanceMap="distance/foliage_grapeWeed_distance_diffuse.png" isCultivatable="false" isWeed="true" isHarvestReady="true">
+            <foliageShape>
+                <foliageLod blockShape="0>0|2"/>
+                <foliageLod blockShape="0>1|2"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|3"/>
+                <foliageLod blockShape="0>1|3"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|4"/>
+                <foliageLod blockShape="0>1|4"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|5"/>
+                <foliageLod blockShape="0>1|5"/>
+            </foliageShape>
+        </foliageState>
+        <!-- 12 & 13 : HARVESTED -->
+        <foliageState name="harvested" distanceMap="distance/foliage_grape_distance_diffuse.png" isCultivatable="false">
+            <foliageShape>
+                <foliageLod blockShape="0>0|0"/>
+                <foliageLod blockShape="0>1|0"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|1"/>
+                <foliageLod blockShape="0>1|1"/>
+            </foliageShape>
+        </foliageState>
+        <foliageState name="harvestedWeed" distanceMap="distance/foliage_grapeWeed_distance_diffuse.png" isCultivatable="false">
+            <foliageShape>
+                <foliageLod blockShape="0>0|2"/>
+                <foliageLod blockShape="0>1|2"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|3"/>
+                <foliageLod blockShape="0>1|3"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|4"/>
+                <foliageLod blockShape="0>1|4"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|5"/>
+                <foliageLod blockShape="0>1|5"/>
+            </foliageShape>
+        </foliageState>
+        <!-- 14 : DEAD -->
+        <foliageState name="dead" distanceMap="distance/foliage_grape_distance_diffuse.png" isWithered="true">
+            <foliageShape>
+                <foliageLod blockShape="0>0|0"/>
+                <foliageLod blockShape="0>1|0"/>
+            </foliageShape>
+            <foliageShape>
+                <foliageLod blockShape="0>0|1"/>
+                <foliageLod blockShape="0>1|1"/>
+            </foliageShape>
+        </foliageState>
+    </foliageLayer>
+
+    <growth>
+        <seasonal initialState="greenSmall2Weed">
+            <period name="EARLY_SPRING" plantingAllowed="true">
+                <update startState="noLeaves" endState="greenSmallWeed" /> <!-- always grow to first weed state -->
+            </period>
+            <period name="MID_SPRING" plantingAllowed="true">
+                <update startState="noLeaves" endState="greenSmallWeed" /> <!-- always grow to first weed state -->
+                <update startState="greenSmall" endState="greenSmall2" />
+                <update startState="greenSmallWeed" endState="greenSmall2Weed" />
+            </period>
+            <period name="LATE_SPRING" plantingAllowed="true">
+                <update startState="noLeaves" endState="greenSmallWeed" /> <!-- always grow to first weed state -->
+                <update startState="greenSmall" endState="greenSmall2" />
+                <update startState="greenSmallWeed" endState="greenSmall2Weed" />
+            </period>
+            <period name="EARLY_SUMMER">
+                <update startState="noLeaves" endState="greenSmallWeed" /> <!-- always grow to first weed state -->
+                <update startState="greenSmall" endState="greenSmall2" />
+                <update startState="greenSmallWeed" endState="greenSmall2Weed" />
+                <update startState="greenSmall2" endState="greenBig" />
+                <update startState="greenSmall2Weed" endState="greenBigWeed" />
+            </period>
+            <period name="MID_SUMMER">
+                <update startState="noLeaves" endState="greenSmallWeed" /> <!-- always grow to first weed state -->
+                <update startState="greenSmall" endState="greenSmall2" />
+                <update startState="greenSmallWeed" endState="greenSmall2Weed" />
+                <update startState="greenSmall2" endState="greenBig" />
+                <update startState="greenSmall2Weed" endState="greenBigWeed" />
+                <update startState="greenBig" endState="greenBig2" />
+                <update startState="greenBigWeed" endState="greenBig2Weed" />
+            </period>
+            <period name="LATE_SUMMER">
+                <update startState="noLeaves" endState="greenSmallWeed" /> <!-- always grow to first weed state -->
+                <update startState="greenSmall" endState="greenSmall2" />
+                <update startState="greenSmallWeed" endState="greenSmall2Weed" />
+                <update startState="greenSmall2" endState="greenBig" />
+                <update startState="greenSmall2Weed" endState="greenBigWeed" />
+                <update startState="greenBig" endState="greenBig2" />
+                <update startState="greenBigWeed" endState="greenBig2Weed" />
+                <update startState="greenBig2" endState="harvestReady" />
+                <update startState="greenBig2Weed" endState="harvestReadyWeed" />
+            </period>
+            <period name="EARLY_AUTUMN">
+                <update startState="noLeaves" endState="greenSmallWeed" /> <!-- always grow to first weed state -->
+                <update startState="greenSmall" endState="greenSmall2" />
+                <update startState="greenSmallWeed" endState="greenSmall2Weed" />
+                <update startState="greenSmall2" endState="greenBig" />
+                <update startState="greenSmall2Weed" endState="greenBigWeed" />
+                <update startState="greenBig" endState="greenBig2" />
+                <update startState="greenBigWeed" endState="greenBig2Weed" />
+                <update startState="greenBig2" endState="harvestReady" />
+                <update startState="greenBig2Weed" endState="harvestReadyWeed" />
+            </period>
+            <period name="MID_AUTUMN">
+                <update startState="greenSmall" endState="dead" />
+                <update startState="greenSmallWeed" endState="dead" />
+                <update startState="greenSmall2" endState="dead" />
+                <update startState="greenSmall2Weed" endState="dead" />
+                <update startState="greenBig" endState="dead" />
+                <update startState="greenBigWeed" endState="dead" />
+                <update startState="greenBig2" endState="dead" />
+                <update startState="greenBig2Weed" endState="dead" />
+                <update startState="harvestReady" endState="dead" />
+                <update startState="harvestReadyWeed" endState="dead" />
+                <update startState="harvested" endState="dead" />
+                <update startState="harvestedWeed" endState="dead" />
+            </period>
+            <period name="LATE_AUTUMN">
+                <update startState="greenSmall" endState="dead" />
+                <update startState="greenSmallWeed" endState="dead" />
+                <update startState="greenSmall2" endState="dead" />
+                <update startState="greenSmall2Weed" endState="dead" />
+                <update startState="greenBig" endState="dead" />
+                <update startState="greenBigWeed" endState="dead" />
+                <update startState="greenBig2" endState="dead" />
+                <update startState="greenBig2Weed" endState="dead" />
+                <update startState="harvestReady" endState="dead" />
+                <update startState="harvestReadyWeed" endState="dead" />
+                <update startState="harvested" endState="dead" />
+                <update startState="harvestedWeed" endState="dead" />
+            </period>
+            <period name="EARLY_WINTER">
+                <update startState="greenSmall" endState="dead" />
+                <update startState="greenSmallWeed" endState="dead" />
+                <update startState="greenSmall2" endState="dead" />
+                <update startState="greenSmall2Weed" endState="dead" />
+                <update startState="greenBig" endState="dead" />
+                <update startState="greenBigWeed" endState="dead" />
+                <update startState="greenBig2" endState="dead" />
+                <update startState="greenBig2Weed" endState="dead" />
+                <update startState="harvestReady" endState="dead" />
+                <update startState="harvestReadyWeed" endState="dead" />
+                <update startState="harvested" endState="dead" />
+                <update startState="harvestedWeed" endState="dead" />
+            </period>
+            <period name="MID_WINTER">
+                <update startState="greenSmall" endState="dead" />
+                <update startState="greenSmallWeed" endState="dead" />
+                <update startState="greenSmall2" endState="dead" />
+                <update startState="greenSmall2Weed" endState="dead" />
+                <update startState="greenBig" endState="dead" />
+                <update startState="greenBigWeed" endState="dead" />
+                <update startState="greenBig2" endState="dead" />
+                <update startState="greenBig2Weed" endState="dead" />
+                <update startState="harvestReady" endState="dead" />
+                <update startState="harvestReadyWeed" endState="dead" />
+                <update startState="harvested" endState="dead" />
+                <update startState="harvestedWeed" endState="dead" />
+            </period>
+            <period name="LATE_WINTER">
+                <update startState="greenSmall" endState="dead" />
+                <update startState="greenSmallWeed" endState="dead" />
+                <update startState="greenSmall2" endState="dead" />
+                <update startState="greenSmall2Weed" endState="dead" />
+                <update startState="greenBig" endState="dead" />
+                <update startState="greenBigWeed" endState="dead" />
+                <update startState="greenBig2" endState="dead" />
+                <update startState="greenBig2Weed" endState="dead" />
+                <update startState="harvestReady" endState="dead" />
+                <update startState="harvestReadyWeed" endState="dead" />
+                <update startState="harvested" endState="dead" />
+                <update startState="harvestedWeed" endState="dead" />
+            </period>
+        </seasonal>
+
+        <nonSeasonal>
+            <update startState="noLeaves"        endState="greenSmallWeed" />
+            <update startState="greenSmall"      endState="greenSmall2" />
+            <update startState="greenSmallWeed"  endState="greenSmall2Weed" />
+            <update startState="greenSmall2"     endState="greenBig" />
+            <update startState="greenSmall2Weed" endState="greenBigWeed" />
+            <update startState="greenBig"        endState="greenBig2" />
+            <update startState="greenBigWeed"    endState="greenBig2Weed" />
+            <update startState="greenBig2"       endState="harvestReady" />
+            <update startState="greenBig2Weed"   endState="harvestReadyWeed" />
+            <update startState="harvested"       endState="dead" />
+            <update startState="harvestedWeed"   endState="dead" />
+        </nonSeasonal>
+    </growth>
+</foliageType>

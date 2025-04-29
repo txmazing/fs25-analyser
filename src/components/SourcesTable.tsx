@@ -3,6 +3,7 @@ import {
 	ChevronDown,
 	ChevronUp,
 	Columns,
+	Info,
 	Search,
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -22,6 +23,12 @@ import {
 	TableHeader,
 	TableRow,
 } from "./ui/table";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Eigene Typdefinitionen als Ersatz für @tanstack/react-table
 type SortingState = { id: string; desc: boolean }[];
@@ -62,7 +69,37 @@ const SourcesTable: React.FC<SourcesTableProps> = ({
 				defaultVisible: true,
 				accessorFn: (row) => row.name,
 				header: () => "Ware",
-				cell: (info) => translateResourceName(info.getValue() as string),
+				cell: (info) => {
+					const source = info.row.original;
+					const resourceName = translateResourceName(info.getValue() as string);
+
+					// Für spezielle Fruchtarten ein Info-Icon mit Tooltip hinzufügen
+					if (source.isSpecialCrop && source.notes) {
+						return (
+							<div className='flex items-center'>
+								<span>{resourceName}</span>
+								<TooltipProvider>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<div className='ml-1.5'>
+												<Info size={16} className='text-primary cursor-help' />
+											</div>
+										</TooltipTrigger>
+										<TooltipContent side='right' className='max-w-xs'>
+											<div>
+												<span className='font-medium'>
+													Hinweis zur Verarbeitung:
+												</span>{" "}
+												{source.notes}
+											</div>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
+						);
+					}
+					return resourceName;
+				},
 			},
 			{
 				id: "price",

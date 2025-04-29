@@ -17,6 +17,41 @@ export const translateResourceName = (name: string): string => {
 			return "Raps";
 		case "SUNFLOWER":
 			return "Sonnenblumen";
+		case "MAIZE":
+			return "Mais";
+		case "BEETROOT":
+			return "Zuckerrüben";
+		case "CARROT":
+			return "Karotten";
+		case "COTTON":
+			return "Baumwolle";
+		case "GRASS":
+			return "Gras";
+		case "GRAPE":
+			return "Trauben";
+		case "GREENBEAN":
+			return "Grüne Bohnen";
+		case "OLIVE":
+			return "Oliven";
+		case "PARSNIP":
+			return "Pastinaken";
+		case "POPLAR":
+			return "Pappeln (→ Hackschnitzel)"; // Kennzeichnung als Hackschnitzel-Quelle
+		case "POTATO":
+			return "Kartoffeln";
+		case "RICE":
+			return "Reis";
+		case "RICELONGGRAIN":
+			return "Langkornreis";
+		case "SOYBEAN":
+			return "Sojabohnen";
+		case "SPINACH":
+			return "Spinat";
+		case "SUGARBEET":
+			return "Zuckerrüben";
+		case "SUGARCANE":
+			return "Zuckerrohr";
+		// Verarbeitete Produkte
 		case "FLOUR":
 			return "Mehl";
 		case "SUNFLOWER_OIL":
@@ -25,6 +60,8 @@ export const translateResourceName = (name: string): string => {
 			return "Rapsöl";
 		case "STRAW":
 			return "Stroh";
+		case "WOODCHIPS":
+			return "Hackschnitzel";
 		default:
 			return name;
 	}
@@ -40,6 +77,18 @@ export const fruitTypeToFillType = {
 	sorghum: "SORGHUM",
 	canola: "CANOLA",
 	sunflower: "SUNFLOWER",
+	// Neue Fruchtarten
+	maize: "MAIZE",
+	beetRoot: "BEETROOT",
+	carrot: "CARROT",
+	cotton: "COTTON",
+	grass: "GRASS",
+	grape: "GRAPE",
+	greenBean: "GREENBEAN",
+	olive: "OLIVE",
+	parsnip: "PARSNIP",
+	poplar: "POPLAR",
+	// Verarbeitete Produkte
 	flour: "FLOUR",
 	sunflowerOil: "SUNFLOWER_OIL",
 	canolaOil: "CANOLA_OIL",

@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<foliageType xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../shared/xml/schema/foliageType.xsd">
+    <fruitType name="oilseedRadish" shownOnMap="true" useForFieldMissions="false" isCatchCrop="true">
+        <mapColors default="0.0685 0.4564 0.2307 1" colorBlind="0.0130 0.0908 0.5210 1"/>
+        <harvest litersPerSqm="0.99"/>
+        <growth resetsSpray="true" growthRequiresLime="true"/>
+        <soil lowDensityRequired="false" increasesDensity="false" consumesLime="false" startSprayLevel="0"/>
+        <seeding directionSnapAngle="0" litersPerSqm="0.004" isAvailable="true" plantsWeed="false"/>
+        <cultivation isAllowed="true"/>
+    </fruitType>
+
+    <!-- oilseed radish -->
+    <foliageLayer densityMapChannelOffset="0" numDensityMapChannels="4" numBlocksPerUnit="1.8" shapeSource="oilseedRadish.i3d" alignsToSun="false">
+        <foliageStateDefaults distanceMapLayer="1" width="1.0" height="1.0" widthVariance="0" heightVariance="0.2" horizontalPositionVariance="0.5"/>
+        <!-- default LOD distances etc -->
+        <foliageLodDefaults lod="0" viewDistance="18" blendOutDistance="2" atlasSize="1" atlasOffset="1 0" texCoords="0 0 1 1"/>
+        <foliageLodDefaults lod="1" viewDistance="80" blendOutDistance="2" atlasSize="1" atlasOffset="1 0" texCoords="0 0 1 1"/>
+        <!-- 1 0 0 0 - invisible -->
+        <foliageState name="invisible" isGrowing="true"/>
+        <!-- 0 1 0 0 - green small -->
+        <foliageState name="greenSmall" distanceMap="distance/foliage_oilseedRadish_distance2_diffuse.png" isGrowing="true" isWithered="true" isHarvestReady="true" groundType="HARVEST_READY_OTHER" fieldCourseLineHeight="0.25">
+            <foliageShape>
+                <foliageLod blockShape="0>0|0"/>
+                <foliageLod blockShape="0>1|0"/>
+            </foliageShape>
+        </foliageState>
+    </foliageLayer>
+
+    <growth>
+        <seasonal initialState="greenSmall">
+            <period name="EARLY_SPRING" plantingAllowed="true">
+                <update startState="invisible" endState="greenSmall" />
+            </period>
+            <period name="MID_SPRING" plantingAllowed="true">
+                <update startState="invisible" endState="greenSmall" />
+            </period>
+            <period name="LATE_SPRING" plantingAllowed="true">
+                <update startState="invisible" endState="greenSmall" />
+            </period>
+            <period name="EARLY_SUMMER" plantingAllowed="true">
+                <update startState="invisible" endState="greenSmall" />
+            </period>
+            <period name="MID_SUMMER" plantingAllowed="true">
+                <update startState="invisible" endState="greenSmall" />
+            </period>
+            <period name="LATE_SUMMER" plantingAllowed="true">
+                <update startState="invisible" endState="greenSmall" />
+            </period>
+            <period name="EARLY_AUTUMN" plantingAllowed="true">
+                <update startState="invisible" endState="greenSmall" />
+            </period>
+            <period name="MID_AUTUMN" plantingAllowed="true">
+                <update startState="invisible" endState="greenSmall" />
+            </period>
+            <period name="LATE_AUTUMN" />
+            <period name="EARLY_WINTER" />
+            <period name="MID_WINTER" />
+            <period name="LATE_WINTER" />
+        </seasonal>
+    </growth>
+
+</foliageType>

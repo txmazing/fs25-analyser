@@ -15,6 +15,8 @@ export interface SourceData {
 	strawYieldPerHa?: number; // Strohertrag pro Hektar (nur für Getreide)
 	revenueWithStrawBase?: number; // Erlös/ha mit Stroh (Grundpreis)
 	revenueWithStrawMax?: number; // Erlös/ha mit Stroh (Maximalpreis)
+	notes?: string; // Optionales Feld für spezielle Hinweise
+	isSpecialCrop?: boolean; // Markierung für Sonderfrüchte mit spezieller Verarbeitung
 }
 
 export interface ProductionData {

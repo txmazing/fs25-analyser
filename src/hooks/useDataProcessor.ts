@@ -108,13 +108,13 @@ export const useDataProcessor = () => {
 							// Umrechnung von Liter pro m² in Liter pro Hektar (1 ha = 10.000 m²)
 							const yieldPerHa = litersPerSqm * 10000;
 
-							// Wenn es ein Mapping für diesen Fruchttyp gibt, speichere den Ertrag
-							if (fruitName in fruitTypeToFillType) {
-								const fillType =
-									fruitTypeToFillType[
-										fruitName as keyof typeof fruitTypeToFillType
-									];
+							// Der entscheidende Teil: Wir brauchen das Mapping in BEIDEN Richtungen
+							const fillType = getFillTypeFromFruitName(fruitName);
+							if (fillType) {
 								yieldData[fillType] = yieldPerHa;
+								console.log(
+									`Extrahiert: ${fruitName} -> ${fillType} mit Ertrag: ${yieldPerHa} l/ha`
+								);
 							}
 						}
 
@@ -129,12 +129,9 @@ export const useDataProcessor = () => {
 								windrowElement.getAttribute("litersPerSqm") || "0"
 							);
 
-							// Wenn es ein Mapping für diesen Fruchttyp gibt, speichere den Strohertrag
-							if (fruitName in fruitTypeToFillType) {
-								const fillType =
-									fruitTypeToFillType[
-										fruitName as keyof typeof fruitTypeToFillType
-									];
+							// Der entscheidende Teil: Wir brauchen das Mapping in BEIDEN Richtungen
+							const fillType = getFillTypeFromFruitName(fruitName);
+							if (fillType) {
 								strawYieldData[fillType] = strawLitersPerSqm * 10000; // Umrechnung zu Liter/ha
 								console.log(
 									`Strohertrag für ${fillType}: ${strawYieldData[fillType]} l/ha extrahiert`
@@ -144,23 +141,16 @@ export const useDataProcessor = () => {
 					}
 				});
 
-				const requiredCrops = [
-					"WHEAT",
-					"BARLEY",
-					"OAT",
-					"SORGHUM",
-					"CANOLA",
-					"SUNFLOWER",
-				];
-				const missingCrops = requiredCrops.filter((crop) => !yieldData[crop]);
-
-				if (missingCrops.length > 0) {
-					throw new Error(
-						`Ernteerträge für folgende Feldfrüchte fehlen: ${missingCrops.join(
-							", "
-						)}`
-					);
+				// Prüfen, ob wir überhaupt Erträge für Fruchtarten haben, ohne eine bestimmte Liste zu erzwingen
+				if (Object.keys(yieldData).length === 0) {
+					throw new Error("Keine Ernteerträge für Feldfrüchte gefunden");
 				}
+
+				console.log(
+					`Gefundene Feldfrüchte mit Erträgen: ${Object.keys(yieldData).join(
+						", "
+					)}`
+				);
 
 				// Quellendaten aus fillTypes.xml extrahieren
 				if (!fillTypesDoc) {
@@ -169,20 +159,17 @@ export const useDataProcessor = () => {
 					);
 				}
 
-				// Rest der Funktion bleibt gleich
 				const fillTypes = fillTypesDoc.querySelectorAll("fillType");
 				const rawData: SourceData[] = Array.from(fillTypes)
 					.filter((fillType) => {
 						const name = fillType.getAttribute("name");
-						return [
-							"WHEAT",
-							"BARLEY",
-							"OAT",
-							"SORGHUM",
-							"CANOLA",
-							"SUNFLOWER",
-							"STRAW", // Stroh als eigene Quelle hinzufügen
-						].includes(name || "");
+						// Statt einer festen Liste alle bekannten Fruchtarten aus dem Mapping einbeziehen
+						// oder Fruchtarten, die in yieldData existieren
+						return (
+							Object.values(fruitTypeToFillType).includes(name || "") ||
+							Object.keys(yieldData).includes(name || "") ||
+							name === "STRAW"
+						);
 					})
 					.map((fillType) => {
 						const name = fillType.getAttribute("name") || "";
@@ -196,11 +183,14 @@ export const useDataProcessor = () => {
 						const factors = Array.from(
 							economy?.querySelectorAll("factor") || []
 						);
-						const maxPriceFactor = Math.max(
-							...factors.map((factor) =>
-								parseFloat(factor.getAttribute("value") || "1")
-							)
-						);
+						const maxPriceFactor =
+							factors.length > 0
+								? Math.max(
+										...factors.map((factor) =>
+											parseFloat(factor.getAttribute("value") || "1")
+										)
+								  )
+								: 1.0; // Standardfaktor 1.0 wenn keine Faktoren definiert sind
 
 						// Preise mit Schwierigkeitsfaktor berechnen (für "hard" initial)
 						const basePrice = basePriceHard * DIFFICULTY_FACTORS["hard"];
@@ -320,17 +310,43 @@ export const useDataProcessor = () => {
 			? strawBasePrice * strawSource.maxPriceFactor
 			: 0;
 
+		const woodchipsData = getWoodchipsData(fillTypesDoc);
+
 		const updatedSourceData = rawData.map((source) => {
 			// Preise mit Schwierigkeitsfaktor berechnen
-			const basePrice = source.basePriceHard * difficultyFactor;
-			const maxPrice =
+			let basePrice = source.basePriceHard * difficultyFactor;
+			let maxPrice =
 				source.basePriceHard * difficultyFactor * source.maxPriceFactor;
 
 			// Ernteertrag basierend auf Düngungsstatus berechnen
-			// Bei voller Düngung ist der Ertrag doppelt so hoch wie der Grundertrag
-			// Bei fehlender Düngung ist der Ertrag nur der Grundertrag
 			const yieldFactor = fullyFertilized ? 2.0 : 1.0;
-			const fullYieldPerHa = source.rawYieldPerHa * yieldFactor;
+			let fullYieldPerHa = source.rawYieldPerHa * yieldFactor;
+
+			let isSpecialCrop = false;
+
+			// Sonderfall für Pappeln: Preis für Hackschnitzel verwenden
+			if (source.name === "POPLAR" && woodchipsData) {
+				isSpecialCrop = true;
+				// Hackschnitzel-Preise mit Schwierigkeitsfaktor anwenden
+				const woodchipsBasePrice = woodchipsData.basePrice * difficultyFactor;
+				const woodchipsMaxPrice =
+					woodchipsBasePrice * woodchipsData.maxPriceFactor;
+
+				// Umrechnungsfaktor von Pappeln zu Hackschnitzeln
+				// In Farming Simulator werden typischerweise circa 3 Liter Hackschnitzel
+				// pro Liter Pappeln produziert bei der Ernte mit einem Forstmulcher
+				const conversionFactor = 3.0; // L Hackschnitzel pro L Pappeln
+
+				// Erträge und Preise anpassen
+				fullYieldPerHa = source.rawYieldPerHa * yieldFactor * conversionFactor;
+				basePrice = woodchipsBasePrice;
+				maxPrice = woodchipsMaxPrice;
+
+				// Notizen für die Anzeige
+				source.notes =
+					"Pappeln werden direkt zu Hackschnitzeln verarbeitet. " +
+					"Ertrag und Preis basieren auf Hackschnitzeln nach Verarbeitung.";
+			}
 
 			// Erlös pro Hektar neu berechnen mit angepassten Preisen
 			const revenuePerHaBase = (basePrice * fullYieldPerHa) / 1000; // in €/ha
@@ -359,6 +375,7 @@ export const useDataProcessor = () => {
 				basePrice: basePrice,
 				maxPrice: maxPrice,
 				yieldPerHa: fullYieldPerHa,
+				isSpecialCrop: isSpecialCrop,
 				revenuePerHaBase: revenuePerHaBase,
 				revenuePerHaMax: revenuePerHaMax,
 				revenueWithStrawBase: revenueWithStrawBase,
@@ -733,6 +750,93 @@ export const useDataProcessor = () => {
 		// Jetzt die richtige Funktion ohne Map-Parameter aufrufen
 		setProductionData(processProductionData(processingData));
 	};
+
+	// Hilfsfunktion, um das richtige fillType für einen fruitType-Namen zu erhalten
+	function getFillTypeFromFruitName(fruitName: string): string | null {
+		// Direkte Suche im fruitTypeToFillType-Objekt
+		const fillType =
+			fruitTypeToFillType[fruitName as keyof typeof fruitTypeToFillType];
+
+		// Wenn nicht gefunden, versuchen wir es mit Großbuchstaben
+		if (!fillType) {
+			// Fallback: Wir nehmen an, dass der fillType derselbe Name sein könnte, aber in Großbuchstaben
+			return fruitName.toUpperCase();
+		}
+
+		return fillType;
+	}
+
+	// Hilfsfunktion zum Ermitteln des Hackschnitzelpreises
+	function getWoodchipsPrice(
+		fillTypesDoc: Document | null | undefined,
+		difficultyFactor: number
+	): number {
+		if (!fillTypesDoc) return 0;
+
+		const woodchipsElement = Array.from(
+			fillTypesDoc.querySelectorAll("fillType")
+		).find((el) => el.getAttribute("name") === "WOODCHIPS");
+
+		if (woodchipsElement) {
+			const economy = woodchipsElement.querySelector("economy");
+			if (economy && economy.hasAttribute("pricePerLiter")) {
+				// Preis pro Liter in Preis pro 1000 Liter umrechnen und Schwierigkeitsfaktor anwenden
+				return (
+					parseFloat(economy.getAttribute("pricePerLiter") || "0") *
+					1000 *
+					difficultyFactor
+				);
+			}
+		}
+
+		// Fallback-Wert, falls Hackschnitzel nicht gefunden wurden
+		return 230; // Angenommener Durchschnittspreis für Hackschnitzel pro 1000 Liter
+	}
+
+	// Hilfsfunktion, um die Hackschnitzel-Daten zu extrahieren
+	function getWoodchipsData(fillTypesDoc: Document | null | undefined): {
+		basePrice: number;
+		maxPriceFactor: number;
+		massPerLiter: number;
+	} | null {
+		if (!fillTypesDoc) return null;
+
+		const woodchipsElement = Array.from(
+			fillTypesDoc.querySelectorAll("fillType")
+		).find((el) => el.getAttribute("name") === "WOODCHIPS");
+
+		if (!woodchipsElement) return null;
+
+		const physics = woodchipsElement.querySelector("physics");
+		const economy = woodchipsElement.querySelector("economy");
+
+		if (!economy || !economy.hasAttribute("pricePerLiter")) return null;
+
+		const basePricePerLiter = parseFloat(
+			economy.getAttribute("pricePerLiter") || "0"
+		);
+
+		// Berechnung des max. Preisfaktors aus den monatlichen Faktoren
+		let maxPriceFactor = 1.0;
+		const factors = Array.from(economy.querySelectorAll("factor") || []);
+		if (factors.length > 0) {
+			maxPriceFactor = Math.max(
+				...factors.map((factor) =>
+					parseFloat(factor.getAttribute("value") || "1")
+				)
+			);
+		}
+
+		const massPerLiter = parseFloat(
+			physics?.getAttribute("massPerLiter") || "0.35"
+		);
+
+		return {
+			basePrice: basePricePerLiter * 1000, // Umrechnung auf Preis pro 1000 Liter
+			maxPriceFactor,
+			massPerLiter,
+		};
+	}
 
 	return {
 		sourceData,
