@@ -16,6 +16,8 @@ permissions:
   id-token: write
 
 # Allow one concurrent deployment
+# The concurrency group "pages" ensures that only one deployment to GitHub Pages
+# can run at a time, avoiding conflicts or overlapping deployments.
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -33,11 +35,11 @@ jobs:
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
-          version: 10
+          version: 10.8.1
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 22.11.0
           cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
