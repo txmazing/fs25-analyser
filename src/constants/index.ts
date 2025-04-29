@@ -13,14 +13,14 @@ export const DIFFICULTY_FACTORS: Record<Difficulty, number> = {
  * Liste der zu ladenden XML-Dateien
  */
 export const XML_FILES = [
-	"/data/maps_fillTypes.xml",
-	"/data/grainMill.xml",
-	"/data/oilMill.xml",
-	"/data/maps_fruitTypes.xml",
-	"/data/wheat.xml",
-	"/data/barley.xml",
-	"/data/oat.xml",
-	"/data/sorghum.xml",
-	"/data/canola.xml",
-	"/data/sunflower.xml",
+	"/data/maps/maps_fillTypes.xml",
+	"/data/placeables/grainMill.xml",
+	"/data/placeables/oilMill.xml",
+	"/data/maps/maps_fruitTypes.xml",
+	"/data/foliage/wheat.xml",
+	"/data/foliage/barley.xml",
+	"/data/foliage/oat.xml",
+	"/data/foliage/sorghum.xml",
+	"/data/foliage/canola.xml",
+	"/data/foliage/sunflower.xml",
 ];
